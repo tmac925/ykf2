@@ -1,0 +1,21 @@
+name: Build TankorX World Ports
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "tankorx-data/build_world_ports.py"
+      - "tankorx-data/UpdatedPub150.csv"
+      - ".github/workflows/tankorx-world-build.yml"
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build global TankorX port master
+        run: python tankorx-data/build_world_ports.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tankorx-world-ports
+          path: tankorx-data/generated/
+          if-no-files-found: error
