@@ -104,6 +104,26 @@ for r in country_meta:
         "name": r.get("CLDR display name","") or r.get("UNTERM English Short","") or country_names.get(a2,""),
     }
 
+# Reverse country-name lookup because the current NGA WPI column labelled
+# "Country Code" actually contains country names in this release.
+country_name_to_a2 = {}
+for a2,name in country_names.items():
+    if name:
+        country_name_to_a2[norm(name)] = a2
+for a2,cm in meta.items():
+    for name in (cm.get("name",""), country_names.get(a2,"")):
+        if name:
+            country_name_to_a2[norm(name)] = a2
+country_aliases = {
+    "RUSSIA":"RU","TURKEY":"TR","TURKIYE":"TR","SOUTH KOREA":"KR","KOREA SOUTH":"KR",
+    "NORTH KOREA":"KP","KOREA NORTH":"KP","IRAN":"IR","SYRIA":"SY","LAOS":"LA",
+    "VIETNAM":"VN","BOLIVIA":"BO","VENEZUELA":"VE","TANZANIA":"TZ","MOLDOVA":"MD",
+    "BRUNEI":"BN","CAPE VERDE":"CV","IVORY COAST":"CI","COTE D IVOIRE":"CI",
+    "MICRONESIA":"FM","PALESTINE":"PS","TAIWAN":"TW","HONG KONG":"HK","MACAU":"MO",
+    "CURACAO":"CW","REUNION":"RE","SAINT MARTIN":"MF","SINT MAARTEN":"SX"
+}
+country_name_to_a2.update(country_aliases)
+
 loc_by_code = {}
 sea_by_country_name = defaultdict(list)
 sea_rows = []
@@ -151,9 +171,17 @@ def geo_for(a2, loc=None):
 master=[]
 used_locodes=set()
 
+unmapped_wpi_countries=set()
 for r in wpi:
-    a2=(r.get("Country Code") or "").strip().upper()
     raw=(r.get("UN/LOCODE") or "").replace(" ","").strip().upper()
+    wpi_country=(r.get("Country Code") or "").strip()
+    # Prefer the country encoded in a valid UN/LOCODE. Otherwise resolve the WPI country name.
+    if raw and len(raw)>=5 and raw[:2] in meta:
+        a2=raw[:2]
+    else:
+        a2=country_name_to_a2.get(norm(wpi_country),"")
+    if not a2:
+        unmapped_wpi_countries.add(wpi_country)
     loc=loc_by_code.get(raw) if raw else None
     method=""
     if loc:
@@ -265,6 +293,7 @@ summary = {
     "unlocode_only_sea_ports":sum(1 for r in master if r["Record Coverage"].startswith("UNECE sea-port")),
     "countries":len([x for x in by_country if x]),
     "with_state_province":sum(1 for r in master if r["State/Province ISO 3166-2"]),
+    "unmapped_wpi_country_names":len(unmapped_wpi_countries),
 }
 with open(os.path.join(OUT,"BUILD_SUMMARY.txt"),"w",encoding="utf-8") as f:
     for k,v in summary.items(): f.write(f"{k}: {v}\n")
