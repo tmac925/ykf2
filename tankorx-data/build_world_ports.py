@@ -41,7 +41,7 @@ def parse_coord_pair(s):
     if m.group(6)=="W": lon=-lon
     return (round(lat,6),round(lon,6))
 
-def tankorx_continent(region, subregion, a2):
+def tankorx_continent(region, subregion, intermediate, a2):
     if a2 == "AQ":
         return "Antarctica"
     if region == "Europe":
@@ -53,16 +53,16 @@ def tankorx_continent(region, subregion, a2):
     if region == "Oceania":
         return "Oceania"
     if region == "Americas":
-        if subregion == "South America":
+        if intermediate == "South America":
             return "South America"
         return "North America"
     return region or ""
 
-def group_for(a2, region, subregion):
+def group_for(a2, region, subregion, intermediate):
     if a2 in {"EE","LV","LT"}: return "Baltics"
-    if subregion == "South America": return "South America"
-    if subregion == "Central America": return "Central America"
-    if subregion == "Caribbean": return "Caribbean"
+    if intermediate == "South America": return "South America"
+    if intermediate == "Central America": return "Central America"
+    if intermediate == "Caribbean": return "Caribbean"
     if subregion == "Northern America": return "North America"
     if region == "Europe": return subregion or "Europe"
     if a2 in {"AE","BH","IL","IQ","IR","JO","KW","LB","OM","PS","QA","SA","SY","TR","YE"}: return "Middle East"
@@ -120,7 +120,9 @@ country_aliases = {
     "VIETNAM":"VN","BOLIVIA":"BO","VENEZUELA":"VE","TANZANIA":"TZ","MOLDOVA":"MD",
     "BRUNEI":"BN","CAPE VERDE":"CV","IVORY COAST":"CI","COTE D IVOIRE":"CI",
     "MICRONESIA":"FM","PALESTINE":"PS","TAIWAN":"TW","HONG KONG":"HK","MACAU":"MO",
-    "CURACAO":"CW","REUNION":"RE","SAINT MARTIN":"MF","SINT MAARTEN":"SX"
+    "CURACAO":"CW","REUNION":"RE","SAINT MARTIN":"MF","SINT MAARTEN":"SX",
+    "BURMA":"MM","JOHNSON ATOLL":"UM","JOHNSTON ATOLL":"UM","MIDWAY ISLANDS":"UM",
+    "SOUTH GEORGIA AND SOUTH SANDWICH ISLANDS":"GS","WAKE ISLAND":"UM"
 }
 country_name_to_a2.update(country_aliases)
 
@@ -155,10 +157,10 @@ def geo_for(a2, loc=None):
     sm=sub_map.get((a2,sub),("",""))
     region=cm.get("region",""); subregion=cm.get("subregion","")
     return {
-        "Continent": tankorx_continent(region,subregion,a2),
+        "Continent": tankorx_continent(region,subregion,cm.get("intermediate",""),a2),
         "Geographic Subregion": subregion,
         "Intermediate Region": cm.get("intermediate",""),
-        "TankorX Region Group": group_for(a2,region,subregion),
+        "TankorX Region Group": group_for(a2,region,subregion,cm.get("intermediate","")),
         "Country Name": country_names.get(a2) or cm.get("name",""),
         "Country ISO2": a2,
         "Country ISO3": cm.get("iso3",""),
