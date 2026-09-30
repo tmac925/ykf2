@@ -1,0 +1,18 @@
+name: TankorX Port Data Export
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "tankorx-data/**"
+      - ".github/workflows/tankorx-export.yml"
+  workflow_dispatch:
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tankorx-world-port-source
+          path: tankorx-data/UpdatedPub150.csv
+          if-no-files-found: error
